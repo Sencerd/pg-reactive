@@ -1,6 +1,6 @@
 import { Observable, defer, from, concat, of } from "rxjs";
 import { concatMap, toArray, catchError, finalize } from "rxjs/operators";
-import { Pool, PoolClient, ConnectionConfig } from "pg";
+import { Pool, PoolClient, PoolConfig } from "pg";
 import QueryStream = require("pg-query-stream");
 import * as url from "url";
 
@@ -33,19 +33,19 @@ export default class PgRx {
    *
    * @param config PostgreSQL database connection string or config object
    */
-  constructor(config: string | ConnectionConfig) {
-    let connectParams: ConnectionConfig;
+  constructor(config: string | PoolConfig) {
+    let connectParams: PoolConfig;
 
     if (typeof config === "string") {
-      const params = url.parse(config);
-      const auth = params.auth ? params.auth.split(":") : [];
+      const parsedUrl = url.URL(config);
 
       connectParams = {
-        user: auth[0],
-        password: auth[1],
-        host: params.hostname,
-        port: parseInt(params.port, 10),
-        database: params.pathname.split("/")[1]
+        user: parsedUrl.username,
+        password: parsedUrl.password,
+        host: parsedUrl.hostname,
+        port: parseInt(parsedUrl.port, 10),
+        database: parsedUrl.pathname.split("/")[1],
+        ssl: parsedUrl.searchParams.get('ssl') || false
       };
     } else {
       connectParams = config;
